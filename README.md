@@ -1,6 +1,4 @@
 # AlgoBot
-AI Algorithmic Trading system 
-# AlgoBot
 
 Goal: Fully automated trading bot for index futures (NQ, ES) and later crypto.
 
