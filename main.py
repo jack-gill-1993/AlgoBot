@@ -1,100 +1,212 @@
-from data_loader import get_recent_candles, get_recent_footprint
+# main.py
+# AlgoBot – simple skeleton wired up with:
+# 1) Strategy loader (breakout rejection + breakout acceptance)
+# 2) Data loader hook (where market data will come from later)
+# 3) A run() function that ties it all together
 
-# AlgoBot – first strategy skeleton
+from dataclasses import dataclass
+from typing import List, Dict, Optional
 
-# ---------------------------------------------------------
-# 1. Strategy configurations (your “rules in code form”)
-# ---------------------------------------------------------
 
-STRATEGIES = {
-    "breakout_rejection_short": {
-        "name": "Breakout Rejection (Short)",
-        "markets": ["NQ", "ES"],               # Nasdaq, S&P futures
-        "timeframes": ["5m", "15m"],
+# ========== Basic data structures ==========
+
+@dataclass
+class Candle:
+    """Simple candle structure (we will fill this from real data later)."""
+    time: str
+    open: float
+    high: float
+    low: float
+    close: float
+    volume: float
+
+
+@dataclass
+class FootprintBar:
+    """Simple footprint structure (again, will be real later)."""
+    time: str
+    delta: float          # net buying vs selling
+    total_volume: float   # total traded volume
+
+
+@dataclass
+class Signal:
+    """What the bot should output when it finds a setup."""
+    market: str           # e.g. "NQ", "ES"
+    direction: str        # "LONG" or "SHORT"
+    entry_price: float
+    stop_price: float
+    target_price: float
+    reason: str           # short text: "breakout_rejection" etc.
+
+
+# ========== Strategy loader ==========
+
+def load_strategies() -> Dict[str, Dict]:
+    """
+    For now this just returns a dictionary with parameters
+    for our two core strategies.
+
+    Later we can move this to a separate file or load from JSON,
+    but this is enough to get started.
+    """
+
+    breakout_rejection = {
+        "name": "breakout_rejection_short",
         "direction": "SHORT",
-
-        # Conditions for the breakout candle
-        "breakout_candle": {
-            "price_condition": "close_above_key_level",
-            "delta_condition": "strong_positive_delta"
-        },
-
-        # Conditions for the confirmation candle
-        "confirmation_candle": {
-            "price_condition": "close_back_below_key_level",
-            "delta_condition": "delta_turns_negative"
-        },
-
-        # Risk & exits
-        "stop_rule": "a_little_above_breakout_high",
-        "target_rule": "last_swing_low_or_liquidity_pocket",
-        "max_risk_per_trade": 0.01  # 1% of account
-    },
-
-    "breakout_acceptance_long": {
-        "name": "Breakout Acceptance (Trend-Following Long)",
-        "markets": ["NQ", "ES"],
-        "timeframes": ["5m", "15m"],
-        "direction": "LONG",
-
-        # Market context
-        "trend_filter": "strong_uptrend",  # e.g. price above moving average, higher highs/lows
-
-        # Breakout candle conditions
-        "breakout_candle": {
-            "price_condition": "close_above_resistance_level",
-            "delta_condition": "positive_delta",
-            "footprint_condition": "strong_buy_imbalances_no_heavy_absorption"
-        },
-
-        # Entry logic
-        "entry": {
-            "entry_type": "pullback_after_breakout",
-            "pullback_condition": "price_retests_breakout_zone_and_holds"
-        },
-
-        # Risk & exits
-        "stop_rule": "below_breakout_zone_or_recent_swing_low",
-        "target_rule": "trend_follow_trailing_stop",
-        "trailing_stop_method": "ATR_or_structure",
-        "max_risk_per_trade": 0.01  # 1% of account
+        "min_positive_delta": 0.0,      # placeholder – we will tune later
+        "min_negative_delta": 0.0,      # placeholder
+        "lookback_candles": 2,          # breakout candle + next candle
     }
-}
 
-# ---------------------------------------------------------
-# 2. Simple helper to show what’s configured
-# ---------------------------------------------------------
+    breakout_acceptance = {
+        "name": "breakout_acceptance_long",
+        "direction": "LONG",
+        "min_positive_delta": 0.0,      # placeholder
+        "min_negative_delta": 0.0,
+        "lookback_candles": 2,
+    }
 
-def show_strategies() -> None:
-    """Print a human-readable summary of all strategies."""
-    print("Configured strategies:\n")
-    for key, strat in STRATEGIES.items():
-        print(f"- ID: {key}")
-        print(f"  Name:      {strat['name']}")
-        print(f"  Direction: {strat['direction']}")
-        print(f"  Markets:   {', '.join(strat['markets'])}")
-        print(f"  Timeframes:{', '.join(strat['timeframes'])}")
-        print(f"  Stop rule: {strat['stop_rule']}")
-        print(f"  Target:    {strat['target_rule']}")
-        print(f"  Max risk:  {strat['max_risk_per_trade'] * 100:.1f}%\n")
+    strategies = {
+        "breakout_rejection": breakout_rejection,
+        "breakout_acceptance": breakout_acceptance,
+    }
+
+    return strategies
 
 
-# ---------------------------------------------------------
-# 3. Main entry point (for now just prints your strategies)
-# ---------------------------------------------------------
+# ========== Data loader hook ==========
+
+def load_market_data(market: str) -> Dict[str, List]:
+    """
+    This is a *stub* (placeholder) for market data.
+
+    Later this function will:
+      - connect to your data source / broker
+      - download candles + footprint data
+      - return them as Python lists of Candle / FootprintBar objects.
+
+    For now, we just return empty lists so that the rest of the code runs.
+    """
+
+    candles: List[Candle] = []
+    footprints: List[FootprintBar] = []
+
+    # TODO (later):
+    #   - pull real data from NQ/ES
+    #   - or load from a CSV file for backtesting
+
+    return {
+        "candles": candles,
+        "footprints": footprints,
+    }
+
+
+# ========== Strategy logic hooks (empty for now) ==========
+
+def find_breakout_rejection_signals(
+    market: str,
+    candles: List[Candle],
+    footprints: List[FootprintBar],
+    params: Dict,
+) -> List[Signal]:
+    """
+    Here is where we will later implement the actual rules:
+
+      1. Candle breaks ABOVE a key level
+      2. Breakout candle has strong positive delta
+      3. Next candle closes back BELOW the level with negative delta
+      4. Create a SHORT Signal
+
+    Right now this just returns an empty list so the program runs.
+    """
+
+    signals: List[Signal] = []
+
+    # TODO: implement real detection logic using candles + footprints
+
+    return signals
+
+
+def find_breakout_acceptance_signals(
+    market: str,
+    candles: List[Candle],
+    footprints: List[FootprintBar],
+    params: Dict,
+) -> List[Signal]:
+    """
+    Here is where we will later implement the "trend-following breakout" rules:
+
+      1. Strong uptrend
+      2. Break above resistance
+      3. Positive delta + strong buy imbalances
+      4. No heavy absorption
+      5. Create a LONG Signal
+
+    Right now this just returns an empty list.
+    """
+
+    signals: List[Signal] = []
+
+    # TODO: implement real detection logic
+
+    return signals
+
+
+# ========== Main runner ==========
 
 def run():
-    """
-    First very simple version of AlgoBot:
-    - Just prints out the strategies we have defined.
-    - Later this will:
-        1. Pull live price / footprint data
-        2. Detect setups using STRATEGIES config
-        3. Send orders to broker (paper first!)
-    """
-    print("AlgoBot is starting...\n")
-    show_strategies()
-    print("AlgoBot is ready to grow...")
+    print("=== AlgoBot starting ===")
+
+    # 1) Load strategy parameters
+    strategies = load_strategies()
+    print("Loaded strategies:", list(strategies.keys()))
+
+    # 2) Decide which markets we care about (for now: NQ and ES)
+    markets = ["NQ", "ES"]
+
+    all_signals: List[Signal] = []
+
+    for market in markets:
+        print(f"\n--- Checking market: {market} ---")
+
+        # 3) Load candles + footprint data for this market
+        market_data = load_market_data(market)
+        candles = market_data["candles"]
+        footprints = market_data["footprints"]
+
+        print(f"  Candles loaded: {len(candles)}")
+        print(f"  Footprint bars loaded: {len(footprints)}")
+
+        # 4) Run breakout rejection strategy
+        rej_params = strategies["breakout_rejection"]
+        rejection_signals = find_breakout_rejection_signals(
+            market, candles, footprints, rej_params
+        )
+        print(f"  Breakout rejection signals found: {len(rejection_signals)}")
+        all_signals.extend(rejection_signals)
+
+        # 5) Run breakout acceptance strategy
+        acc_params = strategies["breakout_acceptance"]
+        acceptance_signals = find_breakout_acceptance_signals(
+            market, candles, footprints, acc_params
+        )
+        print(f"  Breakout acceptance signals found: {len(acceptance_signals)}")
+        all_signals.extend(acceptance_signals)
+
+    # 6) Show all signals (later this is where we will send orders)
+    print("\n=== Summary of signals ===")
+    if not all_signals:
+        print("No signals yet – logic still to be implemented.")
+    else:
+        for s in all_signals:
+            print(
+                f"{s.market} | {s.direction} | entry={s.entry_price} "
+                f"stop={s.stop_price} target={s.target_price} | {s.reason}"
+            )
+
+    print("\nAlgoBot is ready for the next development step.")
+
 
 if __name__ == "__main__":
     run()
