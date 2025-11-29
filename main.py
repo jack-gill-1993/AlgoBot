@@ -1,3 +1,5 @@
+from data_loader import get_recent_candles, get_recent_footprint
+
 # AlgoBot – first strategy skeleton
 
 # ---------------------------------------------------------
