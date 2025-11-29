@@ -1,0 +1,49 @@
+# Breakout Acceptance — Bot Recipe
+
+## Inputs
+
+- Price candles for NQ / ES (e.g. 5m or 15m)
+- Volume footprint data (delta + imbalances)
+- Key levels (resistance zones)
+- Trend filter (for example: price above 50 EMA, or bullish Ichimoku cloud)
+
+## Steps for a LONG setup
+
+1. Check that the market is in an UPTREND.
+   - Price is above the trend filter (e.g. 50 EMA / cloud).
+   - Recent swing highs and lows are stepping UP.
+
+2. Mark a clear RESISTANCE level.
+   - Prior swing high or consolidation top.
+   - Level has been tested at least 2–3 times.
+
+3. Confirm the BREAKOUT candle.
+   - Candle closes ABOVE the resistance level.
+   - Delta is POSITIVE.
+   - There are clear BUY IMBALANCES in the footprint near the breakout.
+   - No sign of heavy absorption at the highs (no huge sell volume capping price).
+   - Volume is at least “normal” or higher than the last few candles.
+
+4. Look at the NEXT candle (acceptance check).
+   - Price STAYS above the breakout level (no full return back inside the range).
+   - Delta is not strongly negative (ideally small positive or neutral).
+   - Any pullback is shallow and holds above the level.
+
+5. If steps 1–4 are true:
+   - Signal = LONG.
+   - Entry:
+     - Either at market near the close of the acceptance candle,
+     - Or on a small pullback towards the breakout level.
+   - Stop loss:
+     - Just BELOW the breakout zone (under the level / recent micro swing low).
+   - Take profit:
+     - First target = 1R–2R (one to two times the risk).
+     - Optional: leave part of the position to trail with ATR or swing lows.
+
+## What the bot should output
+
+- Direction: LONG
+- Entry price
+- Stop price
+- First target price
+- (Optional) Trailing stop rules
