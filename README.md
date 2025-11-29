@@ -1,2 +1,2 @@
 # AlgoBot
-AI Algorithmic Trading ystem 
+AI Algorithmic Trading system 
