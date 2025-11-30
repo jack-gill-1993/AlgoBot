@@ -262,3 +262,20 @@ def main():
 
 if __name__ == "__main__":
     main()
+   from polygon_client import PolygonClient
+
+def test_polygon():
+    print("=== Testing Polygon connection ===")
+    api_key = "YOUR_API_KEY_HERE"  # Replace this
+
+    client = PolygonClient(api_key)
+
+    # Try fetching NASDAQ futures
+    candles = client.get_candles("X:NQ=F", timespan="minute", limit=5)
+
+    print("Received", len(candles), "candles.")
+    for c in candles:
+        print(c)
+
+if __name__ == "__main__":
+    test_polygon()
