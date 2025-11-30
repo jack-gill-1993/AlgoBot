@@ -50,9 +50,6 @@ class StrategySignal:
 
 def load_strategies() -> Dict[str, Dict]:
     """
-    For now this is a simple hard-coded config.
-    Later, we can move this into a separate file (e.g. JSON or YAML).
-
     Two strategies:
 
     1) breakout_rejection (short)
@@ -86,13 +83,6 @@ def load_strategies() -> Dict[str, Dict]:
 def mock_fetch_candles(market: str) -> List[Candle]:
     """
     This is just fake data so we can TEST the logic.
-
-    We'll create a simple sequence where:
-    - Price is below a level
-    - Then it breaks above
-    - Then it either rejects or accepts
-
-    You can adjust these numbers to see different behaviours.
     """
     level = 100.0  # pretend "key resistance" level
 
@@ -104,9 +94,6 @@ def mock_fetch_candles(market: str) -> List[Candle]:
         # Breakout candle (over level) - strong positive delta
         Candle("T3", 100.5, 103, 100, 102.5, 1500, 500),
 
-        # Now we create either a rejection or an acceptance pattern.
-        # You can play with these values.
-
         # Example REJECTION candle (closes back inside range, negative delta)
         Candle("T4", 102.5, 103.5,  99.5,  99.8, 1800, -400),
 
@@ -117,7 +104,6 @@ def mock_fetch_candles(market: str) -> List[Candle]:
         Candle("T6", 100.2, 100.5,  95,   96.0, 2000, -600),
     ]
 
-    # In a real bot, you’d fetch market data here instead.
     print(f"[TEST] Loaded {len(candles)} mock candles for {market}.")
     print(f"[TEST] Using level = {level}\n")
     return candles
@@ -129,22 +115,11 @@ def mock_fetch_candles(market: str) -> List[Candle]:
 
 def is_breakout_rejection(prev: Candle, curr: Candle, level: float, tolerance: float) -> bool:
     """
-    Simple breakout rejection logic:
-
-    - Previous candle closed above the level (breakout attempt)
-    - Current candle trades above the level BUT closes back below it
-    - Current candle has NEGATIVE delta (selling stepped in)
+    Simple breakout rejection logic.
     """
-    # Was previous candle clearly above the level?
     prev_above = prev.close > level * (1 + tolerance)
-
-    # Did the current candle poke above the level?
     curr_touched_above = curr.high > level
-
-    # Did the current candle close back below or near the level?
     curr_closed_back_in = curr.close < level * (1 + tolerance)
-
-    # Was there selling pressure?
     selling_pressure = curr.delta < 0
 
     return prev_above and curr_touched_above and curr_closed_back_in and selling_pressure
@@ -152,17 +127,10 @@ def is_breakout_rejection(prev: Candle, curr: Candle, level: float, tolerance: f
 
 def is_breakout_acceptance(prev: Candle, curr: Candle, level: float, tolerance: float) -> bool:
     """
-    Simple breakout acceptance logic:
-
-    - Previous candle was near or just below the level
-    - Current candle breaks above the level
-    - Current candle closes clearly above the level
-    - Current candle has POSITIVE delta (buyers in control)
+    Simple breakout acceptance logic.
     """
     prev_near_level = abs(prev.close - level) <= level * (2 * tolerance)
-
     curr_broke_above = curr.high > level and curr.close > level * (1 + tolerance)
-
     buying_pressure = curr.delta > 0 and curr.close > curr.open
 
     return prev_near_level and curr_broke_above and buying_pressure
@@ -180,7 +148,6 @@ def generate_signals_for_market(
 ) -> List[StrategySignal]:
     """
     Look through the candles and see if any of our strategy conditions are met.
-    For now, we use a fixed 'level' for testing.
     """
     signals: List[StrategySignal] = []
 
@@ -233,16 +200,10 @@ def generate_signals_for_market(
 def main():
     print("=== AlgoBot test run (no real trading yet) ===\n")
 
-    # 1) Load our simple strategies
     strategies = load_strategies()
-
-    # 2) Define test markets (later this could be ["NQ", "ES"])
     test_markets = ["TEST_NQ"]
-
-    # 3) A simple test resistance level
     level = 100.0
 
-    # 4) Loop through each market, load mock data, and search for signals
     for market in test_markets:
         candles = mock_fetch_candles(market)
         signals = generate_signals_for_market(market, candles, strategies, level)
@@ -262,20 +223,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-   from polygon_client import PolygonClient
-
-def test_polygon():
-    print("=== Testing Polygon connection ===")
-    api_key = "YOUR_API_KEY_HERE"  # Replace this
-
-    client = PolygonClient(api_key)
-
-    # Try fetching NASDAQ futures
-    candles = client.get_candles("X:NQ=F", timespan="minute", limit=5)
-
-    print("Received", len(candles), "candles.")
-    for c in candles:
-        print(c)
-
-if __name__ == "__main__":
-    test_polygon()
